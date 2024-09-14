@@ -19,21 +19,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else if (request.message === "clipboard") {
             getClipboardText().then(result => {
                 if (result.data) {
-                    // const processedText = processText(result.data);
-                    // console.log("getClipboardText=clipboard:", result.data);
-                    // console.log("Обработанный текст из буфера обмена:", processedText);
-                    // console.log("const technoPrompt:", technoPrompt + processedText);
-
                     const processedText = processText(result.data);
                     console.log("Обработанный текст из буфера обмена:", processedText);
                     const fullPrompt = technoPrompt + processedText;
                     console.log("const technoPrompt:", fullPrompt);
 
-                    // Отправляем данные обратно в background script
-                    chrome.runtime.sendMessage({
-                        action: "sendToWebhook",
-                        data: fullPrompt
-                    });
+                    // Отправляем данные в background script
+                    sendToWebhook(fullPrompt);
                 } else {
                     console.error("Ошибка getClipboardText=clipboard:", result.error);
                 }
@@ -43,11 +35,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log("Ответ от API:", request.data);
     } else if (request.action === "logApiError") {
         console.error("Ошибка при запросе к API:", request.error);
+    } else if (request.action === "webhookResponse") {
+        if (request.status === "Успешно") {
+            console.log("Ответ от webhook:", request.data);
+        } else if (request.status === "Ошибка") {
+            console.error("Ошибка при отправке на webhook:", request.error);
+        }
     }
 
     sendResponse({ status: "Сообщение получено" });
     return true;
 });
+
+function sendToWebhook(data) {
+    chrome.runtime.sendMessage({ action: "sendToWebhook", data: data }, response => {
+        if (response && response.status) {
+            console.log("Статус отправки запроса:", response.status);
+        }
+    });
+}
+
+// Пример использования:
+// sendToWebhook("Ваши данные здесь");
 
 console.log("Content script загружен и готов к приему сообщений");
 
