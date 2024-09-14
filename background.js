@@ -58,13 +58,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         console.log("Выбрано Politic");
         chrome.tabs.sendMessage(tab.id, {
             action: "logMessage",
-            message: "Выбрано Politic"
+            message: "politic"
         });
     } else if (info.menuItemId === "clipboard") {
         console.log("Выбрано Clipboard");
         chrome.tabs.sendMessage(tab.id, {
             action: "logMessage",
-            message: "Выбрано Clipboard"
+            message: "clipboard"
         });
     }
 });
