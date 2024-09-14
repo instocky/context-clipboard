@@ -19,10 +19,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else if (request.message === "clipboard") {
             getClipboardText().then(result => {
                 if (result.data) {
+                    // const processedText = processText(result.data);
+                    // console.log("getClipboardText=clipboard:", result.data);
+                    // console.log("Обработанный текст из буфера обмена:", processedText);
+                    // console.log("const technoPrompt:", technoPrompt + processedText);
+
                     const processedText = processText(result.data);
-                    console.log("getClipboardText=clipboard:", result.data);
                     console.log("Обработанный текст из буфера обмена:", processedText);
-                    console.log("const technoPrompt:", technoPrompt + processedText);
+                    const fullPrompt = technoPrompt + processedText;
+                    console.log("const technoPrompt:", fullPrompt);
+
+                    // Отправляем данные обратно в background script
+                    chrome.runtime.sendMessage({
+                        action: "sendToWebhook",
+                        data: fullPrompt
+                    });
                 } else {
                     console.error("Ошибка getClipboardText=clipboard:", result.error);
                 }
@@ -76,7 +87,15 @@ async function getClipboardText() {
 
 function processText(text) {
     if (!text) return '';
-    // Заменяем переносы строк на \n и экранируем кавычки
-    console.log('load processText');
-    return text.replace(/\n/g, '\\n').replace(/"/g, '\\"');
+    return text
+        .replace(/\\/g, '\\\\')   // Экранирование обратной косой черты
+        .replace(/"/g, '\\"')     // Экранирование двойных кавычек
+        .replace(/'/g, "\\'")     // Экранирование одинарных кавычек
+        .replace(/\n/g, '\\n')    // Замена переносов строк
+        .replace(/\r/g, '\\r')    // Замена возврата каретки
+        .replace(/\t/g, '\\t')    // Замена табуляций
+        .replace(/\f/g, '\\f')    // Замена перевода формата
+        .replace(/\b/g, '\\b')    // Замена забоя
+        .replace(/\v/g, '\\v')    // Замена вертикальной табуляции
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, c => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4)); // Замена управляющих символов
 }

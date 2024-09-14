@@ -72,7 +72,31 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "logMessage") {
         console.log(request.message);
+    } else if (request.action === "sendToWebhook") {
+        sendDataToWebhook(request.data);
     }
 });
+
+function sendDataToWebhook(data) {
+    fetch('https://webhook.site/dd09f263-09cd-42dc-85e2-3b3c664d0486', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: data }),
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text(); // Изменено с response.json() на response.text()
+        })
+        .then(result => {
+            console.log('Успешно отправлено на webhook. Ответ:', result);
+        })
+        .catch(error => {
+            console.error('Ошибка при отправке на webhook:', error);
+        });
+}
 
 console.log("Context / Clipboard: Background.js загружен");
